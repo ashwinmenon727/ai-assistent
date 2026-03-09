@@ -21,6 +21,10 @@ mongoose.connect(process.env.MONGO_URI)
 
 /* Routes */
 
+app.get("/", (req, res) => {
+    res.send("Server is running!");
+});
+
 app.use("/auth", authRoutes);
 app.use("/chat", chatRoutes);
 
