@@ -8,7 +8,6 @@ const router = express.Router();
 /* ── Validation helpers ── */
 const isValidGmail = (email) => {
     const trimmed = email.trim().toLowerCase();
-    // Must be a valid email format AND end with @gmail.com
     const emailRegex = /^[a-zA-Z0-9._%+\-]+@gmail\.com$/;
     return emailRegex.test(trimmed);
 };
@@ -44,17 +43,14 @@ router.post("/register", async (req, res) => {
     try {
         const { email, password } = req.body;
 
-        // Check fields exist
         if (!email || !password) {
             return res.status(400).json({ message: "Email and password are required." });
         }
 
-        // Validate Gmail
         if (!isValidGmail(email)) {
             return res.status(400).json({ message: "Only Gmail addresses are allowed (e.g. you@gmail.com)." });
         }
 
-        // Validate password strength
         const issues = getPasswordStrength(password);
         if (issues.length > 0) {
             return res.status(400).json({
@@ -62,13 +58,11 @@ router.post("/register", async (req, res) => {
             });
         }
 
-        // Check if user already exists
         const existing = await User.findOne({ email: email.trim().toLowerCase() });
         if (existing) {
             return res.status(409).json({ message: "An account with this email already exists." });
         }
 
-        // Hash password with strong salt
         const hashed = await bcrypt.hash(password, 12);
 
         const user = new User({
@@ -92,7 +86,6 @@ router.post("/login", async (req, res) => {
         const ip = req.ip || req.connection.remoteAddress;
         const attempts = checkRateLimit(ip);
 
-        // Block after 10 failed attempts in 15 min
         if (attempts > 10) {
             return res.status(429).json({ message: "Too many login attempts. Please wait 15 minutes." });
         }
@@ -109,7 +102,6 @@ router.post("/login", async (req, res) => {
 
         const user = await User.findOne({ email: email.trim().toLowerCase() });
 
-        // Use same error for both "no user" and "wrong password" to prevent user enumeration
         if (!user) {
             return res.status(401).json({ message: "Invalid email or password." });
         }
@@ -119,10 +111,8 @@ router.post("/login", async (req, res) => {
             return res.status(401).json({ message: "Invalid email or password." });
         }
 
-        // Reset rate limit on success
         loginAttempts.delete(ip);
 
-        // Sign token with expiry
         const token = jwt.sign(
             { id: user._id, email: user.email },
             process.env.JWT_SECRET,

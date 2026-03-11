@@ -1,9 +1,6 @@
 import { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import zionLogo from "../src/assets/zion-logo.svg";
-
-
 
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500;600&display=swap');
@@ -109,7 +106,6 @@ const styles = `
   }
   .pw-toggle:hover { color: var(--text-2); }
 
-  /* Password strength meter */
   .strength-wrap { margin-top: 8px; }
   .strength-bars { display: flex; gap: 4px; margin-bottom: 5px; }
   .strength-bar {
@@ -171,6 +167,9 @@ const REQUIREMENTS = [
 
 const STRENGTH_LABELS = ["", "Very Weak", "Weak", "Fair", "Strong", "Very Strong"];
 
+// ✅ FIX: Use environment variable for API URL
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 function Register() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
@@ -185,7 +184,7 @@ function Register() {
   const [pwTouched, setPwTouched] = useState(false);
 
   const metCount = REQUIREMENTS.filter(r => r.test(password)).length;
-  const strengthScore = metCount; // 0–5
+  const strengthScore = metCount;
   const allMet = metCount === 5;
   const emailValid = isValidGmail(email);
   const emailError = emailTouched && email && !emailValid;
@@ -202,9 +201,10 @@ function Register() {
 
     setLoading(true); setError("");
     try {
-      await axios.post("http://localhost:5000/auth/register", { email, password });
+      // ✅ FIX: Uses VITE_API_URL env variable instead of hardcoded localhost
+      await axios.post(`${API_URL}/auth/register`, { email, password });
       setSuccess("Account created! Redirecting to sign in…");
-      setTimeout(() => navigate("/"), 2000);
+      setTimeout(() => navigate("/login"), 2000);
     } catch (err) {
       setError(err.response?.data?.message || "Registration failed. Please try again.");
     } finally {
@@ -220,9 +220,8 @@ function Register() {
       <div className="page">
 
         <div className="left-panel">
-
           <div className="brand">
-            <img src={zionLogo} width="32" height="32" style={{ borderRadius: "9px" }} />
+            <div className="brand-mark">Z</div>
             <span className="brand-label">Zion.ai</span>
           </div>
           <div className="left-center">
@@ -283,7 +282,6 @@ function Register() {
                   </button>
                 </div>
 
-                {/* Strength meter */}
                 {password && (
                   <div className="strength-wrap">
                     <div className="strength-bars">
@@ -295,7 +293,6 @@ function Register() {
                   </div>
                 )}
 
-                {/* Requirements checklist */}
                 {pwTouched && password && (
                   <div className="requirements">
                     {REQUIREMENTS.map(r => (
@@ -337,7 +334,7 @@ function Register() {
             </button>
 
             <div className="divider"><div className="divider-line" /><span className="divider-text">or</span><div className="divider-line" /></div>
-            <p className="form-footer">Already have an account? <a href="/">Sign in</a></p>
+            <p className="form-footer">Already have an account? <a href="/login">Sign in</a></p>
           </div>
         </div>
       </div>
